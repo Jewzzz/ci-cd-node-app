@@ -1,25 +1,23 @@
 pipeline {
-    agent any
-
+    agent any 
+    
     environment {
-        // Define any environment variables here if needed
         NODE_ENV = 'development'
     }
 
-    stages {
+    stages { 
         stage('Clone Repository') {
             steps {
-                // Checkout your source code
-                git 'https://github.com/Jewzzz/ci-cd-node-app'
+                retry(3) {
+                    git branch: 'main', url: 'https://github.com/Jewzzz/ci-cd-node-app', credentialsId: 'github-token'
+                }
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 dir('express-api-demo') {
-                    script {
-                        sh 'npm install'
-                    }
+                    bat 'npm install'
                 }
             }
         }
@@ -27,37 +25,37 @@ pipeline {
         stage('Run Tests') {
             steps {
                 dir('express-api-demo') {
-                    sh 'npm test'
+                    bat 'npm test'
                 }
             }
         }
 
         stage('Build Docker Image') {
+            steps {  
+                bat 'docker build -t jewzzzz/nodeapp-cuban:%BUILD_NUMBER% .'
+                bat 'docker tag jewzzzz/nodeapp-cuban:%BUILD_NUMBER% jewzzzz/nodeapp-cuban:latest'
+            }
+        }
+
+        stage('Login to Docker Hub') {
             steps {
-                script {
-                    sh 'docker build -t express-api ./express-api-demo'
+                withCredentials([string(credentialsId: 'docker-password', variable: 'docker_psw')]) {
+                    bat "docker login -u jewzzzz -p %docker_psw%"
                 }
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Push Docker Image') {
             steps {
-                script {
-                    sh 'docker run -d -p 3000:3000 --name express-api express-api'
-                }
+                bat 'docker push jewzzzz/nodeapp-cuban:%BUILD_NUMBER%'
+                bat 'docker push jewzzzz/nodeapp-cuban:latest'
             }
         }
     }
 
     post {
         always {
-            echo 'Pipeline finished.'
-        }
-        success {
-            echo 'Build and tests passed!'
-        }
-        failure {
-            echo 'Something went wrong!'
+            bat 'docker logout'
         }
     }
 }
