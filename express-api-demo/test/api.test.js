@@ -10,7 +10,7 @@ describe('Express API', () => {
   it('GET / should return welcome message', async () => {
     const res = await request(app).get('/');
     expect(res.status).to.equal(200);
-    expect(res.text).to.equal('Hello from Express API!');
+    expect(res.text).to.equal('Hello from Express API! 123456');
   });
 
   it('GET /api/users should return users list', async () => {
