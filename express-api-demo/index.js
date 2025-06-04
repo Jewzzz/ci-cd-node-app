@@ -6,7 +6,7 @@ const port = 3000;
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('Hello from Express API!');
+  res.send('Hello from Express API! 123456');
 });
 
 app.get('/api/users', (req, res) => {
